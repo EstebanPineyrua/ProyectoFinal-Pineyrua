@@ -1,5 +1,0 @@
-[
-  {"id":1,"name":"Auriculares Gamer","price":12000,"stock":10,"img":"https://via.placeholder.com/300x200","description":"Auriculares con micrófono y RGB."},
-  {"id":2,"name":"Mouse Óptico","price":6500,"stock":15,"img":"https://via.placeholder.com/300x200","description":"Mouse ergonómico 16000 DPI."},
-  {"id":3,"name":"Teclado Mecánico","price":20000,"stock":5,"img":"https://via.placeholder.com/300x200","description":"Switches azules, retroiluminado."}
-]

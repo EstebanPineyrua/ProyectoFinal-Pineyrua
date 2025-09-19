@@ -1,8 +1,14 @@
-// script.js - adapta el proyecto al HTML provisto
-const PRODUCTS_URL = 'prodcuts.json';
+
 const STORAGE_KEY = 'mequi_cart_v1';
 
-// Cargar SweetAlert2 dinámicamente (opcional pero recomendado)
+// Productos incrustados directamente
+const products = [
+  { "id":1,"name":"Auriculares Gamer","price":32000,"stock":10,"description":"Auriculares con micrófono y RGB." },
+  { "id":2,"name":"Mouse Óptico","price":78500,"stock":15,"description":"Mouse ergonómico 16000 DPI." },
+  { "id":3,"name":"Teclado Mecánico","price":115000,"stock":5,"description":"Switches azules, retroiluminado." }
+];
+
+// Cargar SweetAlert2 dinámicamente
 function loadSwal() {
   return new Promise((res, rej) => {
     if (window.Swal) return res(window.Swal);
@@ -17,7 +23,7 @@ function loadSwal() {
 /* ---------------- Modelo: Cart ---------------- */
 class Cart {
   constructor() {
-    this.items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; // {id, qty, product}
+    this.items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
   }
   save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.items)); }
   find(id) { return this.items.find(i => i.id === id); }
@@ -55,26 +61,8 @@ const cartItemsEl = document.getElementById('cart-items');
 const cartTotalEl = document.getElementById('cart-total');
 const clearCartBtn = document.getElementById('clear-cart-btn');
 
-let products = [];
 const cart = new Cart();
 let SwalLib = null;
-
-/* ---------------- Carga productos (simula remoto) ---------------- */
-async function loadProducts() {
-  try {
-    const res = await fetch(PRODUCTS_URL);
-    if (!res.ok) throw new Error('Error cargando JSON');
-    const data = await res.json();
-    products = data;
-    renderProductsGrid();
-    populateSelect();
-    renderCart();
-  } catch (err) {
-    console.error(err);
-    if (SwalLib) SwalLib.fire('Error','No se pudieron cargar los productos','error');
-    else alert('No se pudieron cargar los productos');
-  }
-}
 
 /* ---------------- Render: Productos (grid) ---------------- */
 function renderProductsGrid() {
@@ -83,7 +71,6 @@ function renderProductsGrid() {
     const card = document.createElement('article');
     card.className = 'product-card';
     card.innerHTML = `
-      <img src="${p.img}" alt="${escapeHtml(p.name)}">
       <h3>${escapeHtml(p.name)}</h3>
       <p>${escapeHtml(p.description)}</p>
       <p><strong>Precio:</strong> $${Number(p.price).toLocaleString()}</p>
@@ -134,7 +121,6 @@ addToCartForm.addEventListener('submit', (e) => {
   if (qty < 1) qty = 1;
   const existingQty = (cart.find(p.id) || {}).qty || 0;
   if (existingQty + qty > p.stock) {
-    // limitar
     const allowed = p.stock - existingQty;
     if (allowed <= 0) {
       showToast(`No queda stock disponible de ${p.name}`);
@@ -146,7 +132,6 @@ addToCartForm.addEventListener('submit', (e) => {
   }
   cart.add(p, qty);
   renderCart();
-  // reset cantidad a 1
   quantityInputEl.value = '1';
 });
 
@@ -232,7 +217,6 @@ function showToast(msg) {
   if (SwalLib) {
     SwalLib.fire({ toast:true, position:'top-end', icon:'success', title: msg, showConfirmButton:false, timer:1200 });
   } else {
-    // fallback
     console.log(msg);
   }
 }
@@ -245,9 +229,10 @@ function escapeHtml(str) {
 /* ---------------- Inicio ---------------- */
 (async function init(){
   try {
-    // cargar swal si posible (no obligatorio)
     try { SwalLib = await loadSwal(); } catch(e) { console.warn('No se cargó SweetAlert2, se usarán fallbacks'); }
-    await loadProducts();
+    renderProductsGrid();
+    populateSelect();
+    renderCart();
   } catch (err) {
     console.error('Error init', err);
   }

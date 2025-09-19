@@ -85,6 +85,7 @@ button {
 
 button:hover {
     background: #4cae4c;
+    text-align: center;
 }
 
 /* Carrito de compras */
