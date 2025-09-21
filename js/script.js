@@ -1,11 +1,39 @@
-
 const STORAGE_KEY = 'mequi_cart_v1';
 
 // Productos incrustados directamente
 const products = [
-  { "id":1,"name":"Auriculares Gamer","price":32000,"stock":10,"description":"Auriculares con micrófono y RGB." },
-  { "id":2,"name":"Mouse Óptico","price":78500,"stock":15,"description":"Mouse ergonómico 16000 DPI." },
-  { "id":3,"name":"Teclado Mecánico","price":115000,"stock":5,"description":"Switches azules, retroiluminado." }
+  { id:1,
+    name:"Auriculares Gamer",
+    img:"img/auriculares.jpg",
+    price:32000,
+    stock:10,
+    description:"Auriculares HyperX Cloud 2"
+   },
+
+  { id:2,
+    name:"Mouse Gamer",
+    img:"img/mouse.jpg",
+    price:78500,
+    stock:15,
+    description:"Mouse Razer Viper V3"
+  },
+  {
+  id:3,
+  name: "Teclado Mecánico",
+  img: "img/teclado.jpg",
+  stock:5,
+  price: 115000,
+  description: "Teclado Hyperx Alloy Origins"
+  },
+  {
+  id:4,
+  name: "Mousepad",
+  img: "img/gigantus.jpg",
+  price: 65000,
+  stock: 8,
+  description: "Mousepad Razer Gigantus."
+  }
+
 ];
 
 // Cargar SweetAlert2 dinámicamente
@@ -15,7 +43,6 @@ function loadSwal() {
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
     s.onload = () => res(window.Swal);
-    s.onerror = () => rej(new Error('No se pudo cargar SweetAlert2'));
     document.head.appendChild(s);
   });
 }
@@ -27,27 +54,81 @@ class Cart {
   }
   save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.items)); }
   find(id) { return this.items.find(i => i.id === id); }
+  
   add(product, qty = 1) {
-    const existing = this.find(product.id);
-    if (existing) {
-      existing.qty = Math.min(product.stock, existing.qty + qty);
-    } else {
-      this.items.push({ id: product.id, qty: Math.min(qty, product.stock), product });
+    const mainProduct = products.find(p => p.id === product.id);
+    if (!mainProduct) return;
+
+    if (mainProduct.stock <= 0) {
+      showToast("error", `Stock insuficiente de ${product.name}`);
+      return;
     }
+    
+    const existing = this.find(product.id);
+    let finalQty = Math.min(qty, mainProduct.stock);
+
+    if (existing) {
+      existing.qty += finalQty;
+    } else {
+      this.items.push({ id: product.id, qty: finalQty, product });
+    }
+    
+    mainProduct.stock -= finalQty;
     this.save();
   }
+
   updateQty(id, qty) {
     const it = this.find(id);
     if (!it) return;
-    it.qty = Math.max(0, Math.min(it.product.stock, qty));
-    if (it.qty === 0) this.remove(id);
+    
+    const mainProduct = products.find(p => p.id === id);
+    if (!mainProduct) return;
+
+    const oldQty = it.qty;
+    const newQty = Math.max(0, qty);
+    const availableStock = mainProduct.stock + oldQty;
+    
+    if (newQty > availableStock) {
+        showToast("error", `Cantidad ajustada a stock máximo (${availableStock})`);
+        it.qty = availableStock;
+    } else {
+        it.qty = newQty;
+    }
+
+    const delta = it.qty - oldQty;
+    mainProduct.stock -= delta;
+    
+    if (it.qty === 0) {
+      this.remove(id);
+    }
+
     this.save();
   }
+
   remove(id) {
+    const it = this.find(id);
+    if (!it) return;
+    
+    const mainProduct = products.find(p => p.id === id);
+    if (mainProduct) {
+      mainProduct.stock += it.qty;
+    }
+    
     this.items = this.items.filter(i => i.id !== id);
     this.save();
   }
-  clear() { this.items = []; this.save(); }
+  
+  clear() {
+    this.items.forEach(it => {
+      const mainProduct = products.find(p => p.id === it.id);
+      if (mainProduct) {
+        mainProduct.stock += it.qty;
+      }
+    });
+    this.items = [];
+    this.save();
+  }
+  
   total() { return this.items.reduce((s, i) => s + i.product.price * i.qty, 0); }
   count() { return this.items.reduce((s, i) => s + i.qty, 0); }
 }
@@ -71,12 +152,13 @@ function renderProductsGrid() {
     const card = document.createElement('article');
     card.className = 'product-card';
     card.innerHTML = `
+      <img src="${p.img}" alt="${escapeHtml(p.name)}">
       <h3>${escapeHtml(p.name)}</h3>
       <p>${escapeHtml(p.description)}</p>
       <p><strong>Precio:</strong> $${Number(p.price).toLocaleString()}</p>
       <p class="small-note"><strong>Stock:</strong> ${p.stock}</p>
-      <div style="margin-top:.5rem;width:100%;display:flex;gap:.5rem">
-        <button class="btn" data-id="${p.id}" data-action="add-card">Agregar 1</button>
+      <div class="card-button-container">
+        <button class="btn" data-id="${p.id}" data-action="add-card" ${p.stock <= 0 ? 'disabled' : ''}>Agregar</button>
       </div>
     `;
     productListEl.appendChild(card);
@@ -88,14 +170,15 @@ function renderProductsGrid() {
       const id = Number(btn.dataset.id);
       const p = products.find(x => x.id === id);
       if (!p) return;
-      const existingQty = (cart.find(p.id) || {}).qty || 0;
-      if (existingQty >= p.stock) {
-        showToast(`Stock insuficiente de ${p.name}`);
+      if (p.stock <= 0) {
+        showToast("error", `Stock insuficiente de ${p.name}`);
         return;
       }
       cart.add(p, 1);
       renderCart();
-      showToast(`Agregado ${p.name}`);
+      renderProductsGrid();
+      populateSelect(); // Importante: actualiza el stock en el select
+      showToast("success", `Agregado ${p.name}`);
     });
   });
 }
@@ -106,7 +189,11 @@ function populateSelect() {
   products.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p.id;
-    opt.textContent = `${p.name} — $${Number(p.price).toLocaleString()} (stock: ${p.stock})`;
+    opt.textContent = `${p.name} — $${Number(p.price).toLocaleString()} (Stock: ${p.stock})`;
+    if (p.stock <= 0) {
+      opt.disabled = true;
+      opt.textContent += " (AGOTADO)";
+    }
     productSelectEl.appendChild(opt);
   });
 }
@@ -118,20 +205,28 @@ addToCartForm.addEventListener('submit', (e) => {
   let qty = Number(quantityInputEl.value) || 1;
   const p = products.find(x => x.id === id);
   if (!p) return alert('Producto no válido');
+  
   if (qty < 1) qty = 1;
-  const existingQty = (cart.find(p.id) || {}).qty || 0;
-  if (existingQty + qty > p.stock) {
-    const allowed = p.stock - existingQty;
+  
+  const existingQtyInCart = (cart.find(p.id) || {}).qty || 0;
+  
+  const totalQtyRequested = existingQtyInCart + qty;
+  
+  if (totalQtyRequested > (p.stock + existingQtyInCart)) {
+    const allowed = p.stock;
     if (allowed <= 0) {
-      showToast(`No queda stock disponible de ${p.name}`);
+      showToast("error", `No queda stock disponible de ${p.name}`);
       return;
     } else {
       qty = allowed;
-      showToast(`Solo se agregaron ${allowed} unidades de ${p.name} (límite por stock)`);
+      showToast("warning", `Solo se agregaron ${allowed} unidades de ${p.name} (límite por stock)`);
     }
   }
+
   cart.add(p, qty);
   renderCart();
+  renderProductsGrid();
+  populateSelect(); 
   quantityInputEl.value = '1';
 });
 
@@ -145,6 +240,9 @@ function renderCart() {
   }
 
   cart.items.forEach(it => {
+    const mainProduct = products.find(p => p.id === it.id);
+    const maxQty = it.qty + mainProduct.stock;
+
     const row = document.createElement('div');
     row.className = 'cart-item';
     row.innerHTML = `
@@ -153,7 +251,7 @@ function renderCart() {
         <div>$${Number(it.product.price).toLocaleString()} c/u</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.4rem">
-        <input type="number" class="qty-input" min="1" max="${it.product.stock}" value="${it.qty}" data-id="${it.id}">
+        <input type="number" class="qty-input" min="1" max="${maxQty}" value="${it.qty}" data-id="${it.id}">
         <div style="display:flex;gap:.4rem;align-items:center">
           <div>$${(it.product.price * it.qty).toLocaleString()}</div>
           <button class="remove" data-id="${it.id}">Eliminar</button>
@@ -168,18 +266,10 @@ function renderCart() {
     inp.addEventListener('change', (e) => {
       let qty = Number(e.target.value) || 1;
       const id = Number(e.target.dataset.id);
-      const it = cart.find(id);
-      if (!it) return;
-      if (qty > it.product.stock) {
-        qty = it.product.stock;
-        e.target.value = qty;
-        showToast(`Cantidad ajustada a stock máximo (${qty})`);
-      } else if (qty < 1) {
-        qty = 1;
-        e.target.value = 1;
-      }
       cart.updateQty(id, qty);
       renderCart();
+      renderProductsGrid();
+      populateSelect(); 
     });
   });
 
@@ -188,7 +278,9 @@ function renderCart() {
       const id = Number(btn.dataset.id);
       cart.remove(id);
       renderCart();
-      showToast('Artículo eliminado');
+      renderProductsGrid();
+      populateSelect(); 
+      showToast("success", 'Artículo eliminado');
     });
   });
 
@@ -210,12 +302,21 @@ clearCartBtn.addEventListener('click', async () => {
   }
   cart.clear();
   renderCart();
+  renderProductsGrid();
+  populateSelect(); 
 });
 
 /* ---------------- Utils ---------------- */
-function showToast(msg) {
+function showToast(icon, msg) {
   if (SwalLib) {
-    SwalLib.fire({ toast:true, position:'top-end', icon:'success', title: msg, showConfirmButton:false, timer:1200 });
+    SwalLib.fire({ 
+      toast:true, 
+      position:'top-end', 
+      icon: icon, 
+      title: msg, 
+      showConfirmButton:false, 
+      timer:1200 
+    });
   } else {
     console.log(msg);
   }
