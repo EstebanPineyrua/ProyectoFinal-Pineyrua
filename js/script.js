@@ -1,88 +1,5 @@
 const STORAGE_KEY = 'mequi_cart_v1';
-
-// Productos incrustados directamente
-const products = [
-  { id:1,
-    name:"Auriculares Gamer",
-    img:"img/auriculares.jpg",
-    price:32000,
-    stock:10,
-    description:"Auriculares HyperX Cloud 2"
-   },
-
-  { id:2,
-    name:"Mouse Inalambrico",
-    img:"img/mouse.jpg",
-    price:78500,
-    stock:15,
-    description:"Mouse Inalambrico Razer Viper V3 "
-  },
-  {
-  id:3,
-  name: "Teclado Mecánico",
-  img: "img/teclado.jpg",
-  stock:5,
-  price: 115000,
-  description: "Teclado Hyperx Alloy Origins"
-  },
-  {
-  id:4,
-  name: "Mousepad",
-  img: "img/gigantus.jpg",
-  price: 65000,
-  stock: 8,
-  description: "Mousepad Razer Gigantus."
-  },
-  {
-  id:5,
-  name: "Monitor UltraWide",
-  img: "img/monitor.jpg",
-  price: 1500000,
-  stock: 3,
-  description: "Monitor Oled UltraWide Corsair  "
-  },
-  {
-  id:6,
-  name: "Gabinete Gamer",
-  img: "img/gabinete.jpg",
-  price: 240000,
-  stock: 6,
-  description: "Gabinete Gamer Corsair 3500x RGB"
-  },
-  {
-  id:7,
-  name: "Disco M.2 2TB",
-  img: "img/disco.jpg",
-  price: 95000,
-  stock: 12,
-  description: "Disco M.2 NVMe Corsair MP600 2TB"
-  },
-  {
-  id:8,
-  name: "Nvidea RTX 4090",
-  img: "img/grafica.jpg",
-  price: 1800000,
-  stock: 3,
-  description: "RTX 4090 Asus ROG Strix 24GB OC"
-  },
-  {
-  id:9,
-  name: "Fuente EVGA 850W",
-  img: "img/fuente.jpg",
-  price: 320000,
-  stock: 10,
-  description: "Fuente EVGA 850W 80 Plus Gold"
-  },
-  {
-  id:10,
-  name: "Cooler Water",
-  img: "img/cooler.jpg",
-  price: 120000,
-  stock: 15,
-  description: "Cooler Water 360mm Corsair iCUE H150i"
-  }
-
-];
+let products = []; // Array vacío para los productos cargados por fetch
 
 // Cargar SweetAlert2 dinámicamente
 function loadSwal() {
@@ -95,7 +12,7 @@ function loadSwal() {
   });
 }
 
-/* ---------------- Modelo: Cart ---------------- */
+// ---------------- Modelo: Cart ----------------
 class Cart {
   constructor() {
     this.items = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
@@ -137,10 +54,10 @@ class Cart {
     const availableStock = mainProduct.stock + oldQty;
     
     if (newQty > availableStock) {
-        showToast("error", `Cantidad ajustada a stock máximo (${availableStock})`);
-        it.qty = availableStock;
+      showToast("error", `Cantidad ajustada a stock máximo (${availableStock})`);
+      it.qty = availableStock;
     } else {
-        it.qty = newQty;
+      it.qty = newQty;
     }
 
     const delta = it.qty - oldQty;
@@ -181,7 +98,7 @@ class Cart {
   count() { return this.items.reduce((s, i) => s + i.qty, 0); }
 }
 
-/* ---------------- Selectores DOM ---------------- */
+// ---------------- Selectores DOM ----------------
 const productListEl = document.getElementById('product-list');
 const productSelectEl = document.getElementById('product-select');
 const quantityInputEl = document.getElementById('quantity-input');
@@ -193,7 +110,7 @@ const clearCartBtn = document.getElementById('clear-cart-btn');
 const cart = new Cart();
 let SwalLib = null;
 
-/* ---------------- Render: Productos (grid) ---------------- */
+// ---------------- Render: Productos (grid) ----------------
 function renderProductsGrid() {
   productListEl.innerHTML = '';
   products.forEach(p => {
@@ -225,13 +142,13 @@ function renderProductsGrid() {
       cart.add(p, 1);
       renderCart();
       renderProductsGrid();
-      populateSelect(); // Importante: actualiza el stock en el select
+      populateSelect(); 
       showToast("success", `Agregado ${p.name}`);
     });
   });
 }
 
-/* ---------------- Populate select ---------------- */
+// ---------------- Populate select ----------------
 function populateSelect() {
   productSelectEl.innerHTML = '';
   products.forEach(p => {
@@ -246,7 +163,7 @@ function populateSelect() {
   });
 }
 
-/* ---------------- Form: agregar al carrito ---------------- */
+// ---------------- Form: agregar al carrito ----------------
 addToCartForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const id = Number(productSelectEl.value);
@@ -278,7 +195,7 @@ addToCartForm.addEventListener('submit', (e) => {
   quantityInputEl.value = '1';
 });
 
-/* ---------------- Render carrito ---------------- */
+// ---------------- Render carrito ----------------
 function renderCart() {
   cartItemsEl.innerHTML = '';
   if (cart.items.length === 0) {
@@ -335,7 +252,7 @@ function renderCart() {
   cartTotalEl.textContent = cart.total().toFixed(2);
 }
 
-/* ---------------- Limpiar carrito ---------------- */
+// ---------------- Limpiar carrito ----------------
 clearCartBtn.addEventListener('click', async () => {
   if (SwalLib) {
     const { isConfirmed } = await SwalLib.fire({
@@ -354,7 +271,7 @@ clearCartBtn.addEventListener('click', async () => {
   populateSelect(); 
 });
 
-/* ---------------- Utils ---------------- */
+// ---------------- Utils ----------------
 function showToast(icon, msg) {
   if (SwalLib) {
     SwalLib.fire({ 
@@ -375,14 +292,30 @@ function escapeHtml(str) {
   return str.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
 }
 
-/* ---------------- Inicio ---------------- */
+// ---------------- Petición de datos con Fetch ----------------
+async function fetchProducts() {
+  try {
+    const res = await fetch('../data/products.json'); // <-- Cambio aquí
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    products = await res.json();
+  } catch (err) {
+    console.error('Error al cargar los datos:', err);
+    // Puedes mostrar un mensaje de error al usuario en la interfaz
+    productListEl.innerHTML = '<p>Error al cargar los productos. Por favor, intente de nuevo más tarde.</p>';
+  }
+}
+
+// ---------------- Inicio ----------------
 (async function init(){
   try {
+    await fetchProducts(); // Espera a que los productos se carguen
     try { SwalLib = await loadSwal(); } catch(e) { console.warn('No se cargó SweetAlert2, se usarán fallbacks'); }
     renderProductsGrid();
     populateSelect();
     renderCart();
   } catch (err) {
-    console.error('Error init', err);
+    console.error('Error en la inicialización:', err);
   }
 })();
