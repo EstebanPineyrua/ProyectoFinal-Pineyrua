@@ -302,7 +302,6 @@ async function fetchProducts() {
     products = await res.json();
   } catch (err) {
     console.error('Error al cargar los datos:', err);
-    productListEl.innerHTML = '<p>Error al cargar los productos. Por favor, intente de nuevo más tarde.</p>';
   }
 }
 
