@@ -11,11 +11,11 @@ const products = [
    },
 
   { id:2,
-    name:"Mouse Gamer",
+    name:"Mouse Inalambrico",
     img:"img/mouse.jpg",
     price:78500,
     stock:15,
-    description:"Mouse Razer Viper V3"
+    description:"Mouse Inalambrico Razer Viper V3 "
   },
   {
   id:3,
@@ -32,6 +32,54 @@ const products = [
   price: 65000,
   stock: 8,
   description: "Mousepad Razer Gigantus."
+  },
+  {
+  id:5,
+  name: "Monitor UltraWide",
+  img: "img/monitor.jpg",
+  price: 1500000,
+  stock: 3,
+  description: "Monitor Oled UltraWide Corsair  "
+  },
+  {
+  id:6,
+  name: "Gabinete Gamer",
+  img: "img/gabinete.jpg",
+  price: 240000,
+  stock: 6,
+  description: "Gabinete Gamer Corsair 3500x RGB"
+  },
+  {
+  id:7,
+  name: "Disco M.2 2TB",
+  img: "img/disco.jpg",
+  price: 95000,
+  stock: 12,
+  description: "Disco M.2 NVMe Corsair MP600 2TB"
+  },
+  {
+  id:8,
+  name: "Nvidea RTX 4090",
+  img: "img/grafica.jpg",
+  price: 1800000,
+  stock: 3,
+  description: "RTX 4090 Asus ROG Strix 24GB OC"
+  },
+  {
+  id:9,
+  name: "Fuente EVGA 850W",
+  img: "img/fuente.jpg",
+  price: 320000,
+  stock: 10,
+  description: "Fuente EVGA 850W 80 Plus Gold"
+  },
+  {
+  id:10,
+  name: "Cooler Water",
+  img: "img/cooler.jpg",
+  price: 120000,
+  stock: 15,
+  description: "Cooler Water 360mm Corsair iCUE H150i"
   }
 
 ];
