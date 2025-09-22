@@ -292,17 +292,16 @@ function escapeHtml(str) {
   return str.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); });
 }
 
-// ---------------- Petición de datos con Fetch ----------------
+// ----------------Fetch ----------------
 async function fetchProducts() {
   try {
-    const res = await fetch('../data/products.json'); // <-- Cambio aquí
+    const res = await fetch('/ProyectoFinal-Pineyrua/data/products.json');
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     products = await res.json();
   } catch (err) {
     console.error('Error al cargar los datos:', err);
-    // Puedes mostrar un mensaje de error al usuario en la interfaz
     productListEl.innerHTML = '<p>Error al cargar los productos. Por favor, intente de nuevo más tarde.</p>';
   }
 }
@@ -310,7 +309,7 @@ async function fetchProducts() {
 // ---------------- Inicio ----------------
 (async function init(){
   try {
-    await fetchProducts(); // Espera a que los productos se carguen
+    await fetchProducts();
     try { SwalLib = await loadSwal(); } catch(e) { console.warn('No se cargó SweetAlert2, se usarán fallbacks'); }
     renderProductsGrid();
     populateSelect();
