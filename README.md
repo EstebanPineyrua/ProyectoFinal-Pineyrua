@@ -1,0 +1,18 @@
+E COMMERCE DEDICADO A LA INFORMATICA
+
+CARACTERISTICAS:
+
+Carrito de compras
+
+Almacenamiento en Local Storage
+
+
+TECNOLOGIAS:
+
+HTML
+
+CSS
+
+JAVASCRIPT
+
+JSON
